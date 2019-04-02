@@ -21,16 +21,67 @@ namespace codes_netCore.Controllers
         {
             if (ModelState.IsValid)
             {
-                ushort _addedCodes = 0;
+                bool _isNewCodeAdded = false;
 
-                // TODO: преобразовать выражение для сравнения коллекций ??
                 foreach (var code in codes.Values)
                 {
                     var codeInDb = _context.Codes.Where(c => c.R == codes.R && c.Value == code).FirstOrDefault();
                     if (codeInDb == null)
                     {
                         #region Reduce codes
-                        if (codes.R.Length >= 2)
+                        if (codes.R.Length == 1)
+                        {
+                            if (codes.Values.Count() == 1)
+                            {
+                                // all codes of specific R and network
+                                var _codesByNetworkAndR = _context.Codes.Where(c => c.R == codes.R && c.NetworkId == codes.NetworkId);
+                                // AB codes of one network
+                                var _codesInLineOfTheNetwork = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 1)));
+                                if (_codesInLineOfTheNetwork.Count() == 9)
+                                {
+                                    // check if DB contains collapsed codes of specific network. Ex.: 0**, 1** etc
+                                    var _collapsedCodesOfTheNet = _codesByNetworkAndR.Where(c=>c.Value.StartsWith(code.Remove(code.Length - 2)));
+                                    List<Code> _collapsedCodesOfTheNet_filtered = new List<Code>();
+                                    foreach (var _code in _collapsedCodesOfTheNet)
+                                    {
+                                        if (_code.Value.Length == 1)
+                                            _collapsedCodesOfTheNet_filtered.Add(_code);
+                                    }
+                                    if (_collapsedCodesOfTheNet_filtered.Count() == 9)
+                                    {
+                                        _context.Codes.RemoveRange(_collapsedCodesOfTheNet_filtered);
+                                        // collapse codes to one digit code (value)
+                                        _context.Codes.Add(new Code()
+                                        {
+                                            CountryId = codes.CountryId,
+                                            NetworkId = codes.NetworkId,
+                                            R = codes.R,
+                                            Value = code.Remove(code.Length - 2)
+                                        });
+                                        _isNewCodeAdded = true;
+                                    }
+                                    else
+                                    {
+                                        _context.Codes.RemoveRange(_codesInLineOfTheNetwork);
+                                        _context.Codes.Add(new Code()
+                                        {
+                                            CountryId = codes.CountryId,
+                                            NetworkId = codes.NetworkId,
+                                            R = codes.R,
+                                            Value = code.Remove(code.Length - 1)
+                                        });
+                                        _isNewCodeAdded = true;
+                                    }
+                                    break;
+                                }
+                            }
+                            else if (codes.Values.Count() == 10)
+                            {
+
+                            }
+                        }
+
+                        if (codes.R.Length > 1)
                         {
                             if (codes.Values.Count() == 1)
                             {
@@ -85,7 +136,7 @@ namespace codes_netCore.Controllers
                                         // delete _rootCode
                                         if (_context.Codes.Remove(_rootCode) != null)
                                         {
-                                            ++_addedCodes;
+                                            _isNewCodeAdded = true;
                                             break;
                                         }
                                     }
@@ -105,7 +156,7 @@ namespace codes_netCore.Controllers
                                         R = codes.R.Remove(codes.R.Length - 1),
                                         Value = _parentCode
                                     });
-                                    ++_addedCodes;
+                                    _isNewCodeAdded = true;
                                     _context.Codes.RemoveRange(_inLineDBCodes);
                                     break;
 
@@ -122,24 +173,24 @@ namespace codes_netCore.Controllers
                                     R = codes.R.Remove(codes.R.Length - 1),
                                     Value = _parentCode
                                 });
-                                ++_addedCodes;
+                                _isNewCodeAdded = true;
                                 break;
                             }
                         }
                         #endregion
                         _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
 
-                        ++_addedCodes;
+                        _isNewCodeAdded = true;
                     }
                     else
-                    {
+                    {//reassign code
                         if (codeInDb.NetworkId == codes.NetworkId) continue;
                         codeInDb.NetworkId = codes.NetworkId;
                         _context.Entry(codeInDb).State = EntityState.Modified;
-                        ++_addedCodes;
+                        _isNewCodeAdded = true;
                     }
                 }
-                if (_addedCodes == 0)
+                if (_isNewCodeAdded == false)
                     return new StatusCodeResult(StatusCodes.Status400BadRequest);
 
                 _context.SaveChanges();

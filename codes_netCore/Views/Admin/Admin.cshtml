@@ -3,9 +3,8 @@
         <div> @await Html.PartialAsync("/Views/Countries/Create.cshtml") </div>
         <div> @await Html.PartialAsync("/Views/Colors/Create.cshtml") </div>
         <div> @await Html.PartialAsync("/Views/Networks/Create.cshtml") </div>
-        <div>
-            @Html.ActionLink("Back to List", "Main", "Countries")
-        </div>
+        <hr />
+            <a class="btn btn-info mb-2" href="/Countries/Main">Back</a>
     </div>
     <div class="col-lg-6 col-md-9 col-sm-12">
         @await Html.PartialAsync("/Views/Countries/ExportCodes.cshtml")
