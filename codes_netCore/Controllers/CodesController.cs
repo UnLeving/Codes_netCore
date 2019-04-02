@@ -31,53 +31,113 @@ namespace codes_netCore.Controllers
                         #region Reduce codes
                         if (codes.R.Length == 1)
                         {
-                            if (codes.Values.Count() == 1)
+                            // all codes of specific R and network
+                            var _codesByNetworkAndR = _context.Codes.Where(c => c.R == codes.R && c.NetworkId == codes.NetworkId);
+                            if (_codesByNetworkAndR != null)
                             {
-                                // all codes of specific R and network
-                                var _codesByNetworkAndR = _context.Codes.Where(c => c.R == codes.R && c.NetworkId == codes.NetworkId);
-                                // AB codes of one network
-                                var _codesInLineOfTheNetwork = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 1)));
-                                if (_codesInLineOfTheNetwork.Count() == 9)
+                                if (codes.Values.Count() == 1)
                                 {
-                                    // check if DB contains collapsed codes of specific network. Ex.: 0**, 1** etc
-                                    var _collapsedCodesOfTheNet = _codesByNetworkAndR.Where(c=>c.Value.StartsWith(code.Remove(code.Length - 2)));
-                                    List<Code> _collapsedCodesOfTheNet_filtered = new List<Code>();
-                                    foreach (var _code in _collapsedCodesOfTheNet)
+                                    // all entries d** and dd*
+                                    var _entriesCodes = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 2)));
+
+                                    if (_entriesCodes != null)
                                     {
-                                        if (_code.Value.Length == 1)
-                                            _collapsedCodesOfTheNet_filtered.Add(_code);
-                                    }
-                                    if (_collapsedCodesOfTheNet_filtered.Count() == 9)
-                                    {
-                                        _context.Codes.RemoveRange(_collapsedCodesOfTheNet_filtered);
-                                        // collapse codes to one digit code (value)
-                                        _context.Codes.Add(new Code()
+                                        // filter codes to find AB codes of one network // 3 -> 2
+                                        List<Code> _threeDigitsCodes = new List<Code>();
+                                        foreach (var c in _entriesCodes)
+                                            if (c.Value.Length == 3 && c.Value.StartsWith(code.Remove(code.Length - 1)))
+                                                _threeDigitsCodes.Add(c);
+
+                                        if (_threeDigitsCodes.Count > 0)
                                         {
-                                            CountryId = codes.CountryId,
-                                            NetworkId = codes.NetworkId,
-                                            R = codes.R,
-                                            Value = code.Remove(code.Length - 2)
-                                        });
-                                        _isNewCodeAdded = true;
-                                    }
-                                    else
-                                    {
-                                        _context.Codes.RemoveRange(_codesInLineOfTheNetwork);
-                                        _context.Codes.Add(new Code()
+                                            if (_threeDigitsCodes.Count == 9)
+                                            {
+                                                // check if DB contains collapsed codes of specific network. Ex.: [country][R][00*]
+                                                // 2 -> 1
+                                                List<Code> _twoDigitsCodes = new List<Code>();
+                                                foreach (var _code in _entriesCodes)
+                                                    if (_code.Value.Length == 2 && _code.Value.StartsWith(code.Remove(code.Length - 2)))
+                                                        _twoDigitsCodes.Add(_code);
+
+                                                if (_twoDigitsCodes.Count() == 9)
+                                                {
+                                                    // check if DB contains collapsed codes by R. Ex.: [country][R]
+
+                                                    // 1 -> R
+                                                    List<Code> _oneDigitCodes = new List<Code>();
+                                                    foreach (var _code in _entriesCodes)
+                                                        if (_code.Value.Length == 1)
+                                                            _oneDigitCodes.Add(_code);
+
+                                                    if (_oneDigitCodes.Count == 99)
+                                                    {
+                                                        _context.Codes.RemoveRange(_oneDigitCodes);
+                                                        _context.Codes.Add(new Code()
+                                                        {
+                                                            CountryId = codes.CountryId,
+                                                            NetworkId = codes.NetworkId,
+                                                            R = codes.R,
+                                                            Value = null
+                                                        });
+                                                        _isNewCodeAdded = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        _context.Codes.RemoveRange(_twoDigitsCodes);
+                                                        // collapse codes to one digit code (value)
+                                                        _context.Codes.Add(new Code()
+                                                        {
+                                                            CountryId = codes.CountryId,
+                                                            NetworkId = codes.NetworkId,
+                                                            R = codes.R,
+                                                            Value = code.Remove(code.Length - 2)
+                                                        });
+                                                        _isNewCodeAdded = true;
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    _context.Codes.RemoveRange(_threeDigitsCodes);
+                                                    _context.Codes.Add(new Code()
+                                                    {
+                                                        CountryId = codes.CountryId,
+                                                        NetworkId = codes.NetworkId,
+                                                        R = codes.R,
+                                                        Value = code.Remove(code.Length - 1)
+                                                    });
+                                                    _isNewCodeAdded = true;
+                                                }
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
+                                                _isNewCodeAdded = true;
+                                                break;
+                                            }
+                                        }
+                                        else
                                         {
-                                            CountryId = codes.CountryId,
-                                            NetworkId = codes.NetworkId,
-                                            R = codes.R,
-                                            Value = code.Remove(code.Length - 1)
-                                        });
-                                        _isNewCodeAdded = true;
+                                            _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
+                                            _isNewCodeAdded = true;
+                                            break;
+                                        }
                                     }
-                                    break;
+                                }
+                                else if (codes.Values.Count() == 10)
+                                {
+
+                                }
+                                else if(codes.Values.Count() == 500)
+                                {
+
                                 }
                             }
-                            else if (codes.Values.Count() == 10)
+                            else
                             {
-
+                                _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
+                                _isNewCodeAdded = true;
+                                break;
                             }
                         }
 
