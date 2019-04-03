@@ -172,16 +172,17 @@ namespace codes_netCore.Controllers
                                         });
                                         _isNewCodeAdded = true;
                                     }
+                                    break;
                                 }
                                 else if (codes.Values.Count() == 500)
                                 {
                                     // 1 -> R
                                     List<Code> _oneDigitCodes = new List<Code>();
-                                    foreach (var _code in _entriesCodes)
-                                        if (_code.Value.Length == 1)
+                                    foreach (var _code in _codesByNetworkAndR)
+                                        if (_code.Value?.Length == 1)
                                             _oneDigitCodes.Add(_code);
 
-                                    if(_oneDigitCodes.Count == 50)
+                                    if(_oneDigitCodes.Count == 5)
                                     {
                                         _context.RemoveRange(_oneDigitCodes);
                                         _context.Add(new Code()
@@ -191,23 +192,25 @@ namespace codes_netCore.Controllers
                                             R = codes.R,
                                             Value = null
                                         });
+                                        _isNewCodeAdded = true;
                                     }
                                     else
                                     {
                                         // 3 -> 1
-                                        for (int i = 0; i < codes.Values.Count(); i+=10)
+                                        for (int i = 0; i < codes.Values.Count(); i+=100)
                                         {
                                             _context.Codes.Add(new Code()
                                             {
                                                 CountryId = codes.CountryId,
                                                 NetworkId = codes.NetworkId,
                                                 R = codes.R,
-                                                Value = code.Remove(code.Length - 2)
+                                                Value = codes.Values[i].Remove(codes.Values[i].Length - 2)
                                             });
                                         }
 
                                         _isNewCodeAdded = true;
                                     }
+                                    break;
                                 }
                             }
                             else
@@ -388,11 +391,6 @@ namespace codes_netCore.Controllers
             }
             else
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
-        }
-
-        private bool CodeExists(int id)
-        {
-            return _context.Codes.Any(e => e.Id == id);
         }
     }
 }

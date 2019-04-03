@@ -237,11 +237,11 @@ namespace codes_netCore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("Id,Name,Code")] Country country)
+        public async Task<IActionResult> Create([Bind("Id,ISO3166_1_a2,Name,Code")] Country country)
         {
             if (ModelState.IsValid)
             {
-                if (_context.Countries.Where(c => c.Name == country.Name).FirstOrDefault() == null)
+                if (_context.Countries.Where(c => c.Name == country.Name || c.ISO3166_1_a2 == country.ISO3166_1_a2 || c.Code == country.Code).FirstOrDefault() == null)
                 {
                     _context.Add(country);
                     await _context.SaveChangesAsync();

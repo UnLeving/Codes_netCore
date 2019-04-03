@@ -7,6 +7,9 @@ namespace codes_netCore.Models
     {
         public int Id { get; set; }
         [Required]
+        [StringLength(2, MinimumLength = 2)]
+        public string ISO3166_1_a2 { get; set; }
+        [Required]
         [StringLength(20, MinimumLength = 2)]
         public string Name { get; set; }
         [Required]

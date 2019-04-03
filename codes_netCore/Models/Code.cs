@@ -5,7 +5,6 @@ namespace codes_netCore.Models
     public class Code
     {
         public int Id { get; set; }
-        [Required]
         public string Value { get; set; }
         [Required]
         public string R { get; set; }
