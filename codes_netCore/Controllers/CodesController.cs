@@ -34,12 +34,11 @@ namespace codes_netCore.Controllers
                             // all codes of specific R and network
                             var _codesByNetworkAndR = _context.Codes.Where(c => c.R == codes.R && c.NetworkId == codes.NetworkId);
                             if (_codesByNetworkAndR != null)
-                            {
+                            {    
+                                // all entries d** and dd*
+                                var _entriesCodes = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 2)));
                                 if (codes.Values.Count() == 1)
                                 {
-                                    // all entries d** and dd*
-                                    var _entriesCodes = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 2)));
-
                                     if (_entriesCodes != null)
                                     {
                                         // filter codes to find AB codes of one network // 3 -> 2
@@ -107,41 +106,117 @@ namespace codes_netCore.Controllers
                                                     });
                                                     _isNewCodeAdded = true;
                                                 }
-                                                break;
                                             }
                                             else
                                             {
                                                 _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
                                                 _isNewCodeAdded = true;
-                                                break;
                                             }
                                         }
                                         else
                                         {
                                             _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
                                             _isNewCodeAdded = true;
-                                            break;
                                         }
                                     }
                                 }
                                 else if (codes.Values.Count() == 10)
                                 {
+                                    // 2 -> 1
+                                    List<Code> _twoDigitsCodes = new List<Code>();
+                                    foreach (var _code in _entriesCodes)
+                                        if (_code.Value.Length == 2 && _code.Value.StartsWith(code.Remove(code.Length - 2)))
+                                            _twoDigitsCodes.Add(_code);
 
+                                    if (_twoDigitsCodes.Count == 9)
+                                    {
+                                        // 1 -> R
+                                        List<Code> _oneDigitCodes = new List<Code>();
+                                        foreach (var _code in _entriesCodes)
+                                            if (_code.Value.Length == 1)
+                                                _oneDigitCodes.Add(_code);
+
+                                        if(_oneDigitCodes.Count == 99)
+                                        {
+                                            _context.Codes.RemoveRange(_oneDigitCodes);
+                                            _context.Codes.Add(new Code()
+                                            {
+                                                CountryId = codes.CountryId,
+                                                NetworkId = codes.NetworkId,
+                                                R = codes.R,
+                                                Value = null
+                                            });
+                                            _isNewCodeAdded = true;
+                                        }
+                                        else
+                                        {
+                                            _context.Codes.RemoveRange(_twoDigitsCodes);
+                                            _context.Codes.Add(new Code()
+                                            {
+                                                CountryId = codes.CountryId,
+                                                NetworkId = codes.NetworkId,
+                                                R = codes.R,
+                                                Value = code.Remove(code.Length - 2)
+                                            });
+                                            _isNewCodeAdded = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _context.Codes.Add(new Code()
+                                        {
+                                            CountryId = codes.CountryId,
+                                            NetworkId = codes.NetworkId,
+                                            R = codes.R,
+                                            Value = code.Remove(code.Length - 1)
+                                        });
+                                        _isNewCodeAdded = true;
+                                    }
                                 }
-                                else if(codes.Values.Count() == 500)
+                                else if (codes.Values.Count() == 500)
                                 {
+                                    // 1 -> R
+                                    List<Code> _oneDigitCodes = new List<Code>();
+                                    foreach (var _code in _entriesCodes)
+                                        if (_code.Value.Length == 1)
+                                            _oneDigitCodes.Add(_code);
 
+                                    if(_oneDigitCodes.Count == 50)
+                                    {
+                                        _context.RemoveRange(_oneDigitCodes);
+                                        _context.Add(new Code()
+                                        {
+                                            CountryId = codes.CountryId,
+                                            NetworkId = codes.NetworkId,
+                                            R = codes.R,
+                                            Value = null
+                                        });
+                                    }
+                                    else
+                                    {
+                                        // 3 -> 1
+                                        for (int i = 0; i < codes.Values.Count(); i+=10)
+                                        {
+                                            _context.Codes.Add(new Code()
+                                            {
+                                                CountryId = codes.CountryId,
+                                                NetworkId = codes.NetworkId,
+                                                R = codes.R,
+                                                Value = code.Remove(code.Length - 2)
+                                            });
+                                        }
+
+                                        _isNewCodeAdded = true;
+                                    }
                                 }
                             }
                             else
                             {
                                 _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
                                 _isNewCodeAdded = true;
-                                break;
                             }
                         }
-
-                        if (codes.R.Length > 1)
+                        else
                         {
                             if (codes.Values.Count() == 1)
                             {
@@ -219,8 +294,6 @@ namespace codes_netCore.Controllers
                                     _isNewCodeAdded = true;
                                     _context.Codes.RemoveRange(_inLineDBCodes);
                                     break;
-
-                                    // TODO: triger table update
                                 }
                             }
                             else if (codes.Values.Count() == 10)
@@ -239,7 +312,6 @@ namespace codes_netCore.Controllers
                         }
                         #endregion
                         _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
-
                         _isNewCodeAdded = true;
                     }
                     else
