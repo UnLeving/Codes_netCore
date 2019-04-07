@@ -312,10 +312,12 @@ namespace codes_netCore.Controllers
                                 _isNewCodeAdded = true;
                                 break;
                             }
+
+                            _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
+                            _isNewCodeAdded = true;
                         }
                         #endregion
-                        _context.Codes.Add(new Code() { CountryId = codes.CountryId, NetworkId = codes.NetworkId, R = codes.R, Value = code });
-                        _isNewCodeAdded = true;
+
                     }
                     else
                     {//reassign code
