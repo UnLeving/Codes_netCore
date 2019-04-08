@@ -33,7 +33,7 @@ namespace codes_netCore.Controllers
                         {
                             var _Rcodes = _context.Codes.Where(c => c.R == codes.R);
                             // R = root, nothing to add
-                            if (_Rcodes !=null && _Rcodes.FirstOrDefault().Value == null)
+                            if (_Rcodes.Count() !=0 && _Rcodes.FirstOrDefault().Value == null)
                                 break;
 
                             // all codes of specific R and network
@@ -349,18 +349,38 @@ namespace codes_netCore.Controllers
             Code rootCode = _context.Codes.Find(id);
             if (rootCode == null)
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
-            for (int i = 0; i < 10; i++)
+            if (rootCode.Value == null)
             {
-                if (code.Value[code.Value.Length - 1] == i.ToString()[0])
-                    continue;
-
-                _context.Codes.Add(new Code()
+                // TODO: свёртка!
+                string AB = null;
+                List<Code> newCodes = new List<Code>();
+                for (int i = 0; i < 100; ++i)
                 {
-                    CountryId = code.CountryId,
-                    NetworkId = rootCode.NetworkId,
-                    R = code.R,
-                    Value = code.Value.Remove(code.Value.Length - 1) + i
-                });
+                    AB = i < 10 ? $"0{i}" : $"{i}";
+                    for (int j = 0; j < 10; ++j)
+                    {
+                        if (code.Value == $"{AB}{j}") continue;
+                        newCodes.Add(new Code() { Value = $"{AB}{j}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+                }
+
+                _context.AddRange(newCodes);
+            }
+            else
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    if (code.Value[code.Value.Length - 1] == i.ToString()[0])
+                        continue;
+
+                    _context.Codes.Add(new Code()
+                    {
+                        CountryId = code.CountryId,
+                        NetworkId = rootCode.NetworkId,
+                        R = code.R,
+                        Value = code.Value.Remove(code.Value.Length - 1) + i
+                    });
+                }
             }
             var c = _context.Codes.Remove(rootCode);
             if (c != null)
@@ -370,6 +390,7 @@ namespace codes_netCore.Controllers
             }
             else
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
+
         }
 
         [HttpPost]
