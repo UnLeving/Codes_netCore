@@ -17,7 +17,7 @@ namespace codes_netCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateMulti([Bind("CountryId,NetworkId,R,Values")] Codes codes)
+        public IActionResult AddCodes([Bind("CountryId,NetworkId,R,Values")] Codes codes)
         {
             if (ModelState.IsValid)
             {
@@ -31,10 +31,16 @@ namespace codes_netCore.Controllers
                         #region Reduce codes
                         if (codes.R.Length == 1)
                         {
+                            var _Rcodes = _context.Codes.Where(c => c.R == codes.R);
+                            // R = root, nothing to add
+                            if (_Rcodes !=null && _Rcodes.FirstOrDefault().Value == null)
+                                break;
+
                             // all codes of specific R and network
-                            var _codesByNetworkAndR = _context.Codes.Where(c => c.R == codes.R && c.NetworkId == codes.NetworkId);
+                            var _codesByNetworkAndR = _Rcodes.Where(c => c.NetworkId == codes.NetworkId);
+
                             if (_codesByNetworkAndR != null)
-                            {    
+                            {
                                 // all entries d** and dd*
                                 var _entriesCodes = _codesByNetworkAndR.Where(c => c.Value.StartsWith(code.Remove(code.Length - 2)));
                                 if (codes.Values.Count() == 1)
@@ -136,7 +142,7 @@ namespace codes_netCore.Controllers
                                             if (_code.Value.Length == 1)
                                                 _oneDigitCodes.Add(_code);
 
-                                        if(_oneDigitCodes.Count == 99)
+                                        if (_oneDigitCodes.Count == 99)
                                         {
                                             _context.Codes.RemoveRange(_oneDigitCodes);
                                             _context.Codes.Add(new Code()
@@ -182,7 +188,7 @@ namespace codes_netCore.Controllers
                                         if (_code.Value?.Length == 1)
                                             _oneDigitCodes.Add(_code);
 
-                                    if(_oneDigitCodes.Count == 5)
+                                    if (_oneDigitCodes.Count == 5)
                                     {
                                         _context.RemoveRange(_oneDigitCodes);
                                         _context.Add(new Code()
@@ -197,7 +203,7 @@ namespace codes_netCore.Controllers
                                     else
                                     {
                                         // 3 -> 1
-                                        for (int i = 0; i < codes.Values.Count(); i+=100)
+                                        for (int i = 0; i < codes.Values.Count(); i += 100)
                                         {
                                             _context.Codes.Add(new Code()
                                             {
@@ -369,7 +375,7 @@ namespace codes_netCore.Controllers
         [HttpPost]
         public IActionResult Delete(int?[] ids)
         {
-            ushort _deletedCodes = 0;
+            bool _isAnyCodeDeleted = false;
             if (ids == null)
             {
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
@@ -384,9 +390,9 @@ namespace codes_netCore.Controllers
                 }
 
                 if (_context.Codes.Remove(code) != null)
-                    ++_deletedCodes;
+                    _isAnyCodeDeleted = true;
             }
-            if (_deletedCodes > 0)
+            if (_isAnyCodeDeleted)
             {
                 _context.SaveChanges();
                 return new StatusCodeResult(StatusCodes.Status200OK);

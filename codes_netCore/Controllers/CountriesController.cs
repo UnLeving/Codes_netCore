@@ -38,7 +38,7 @@ namespace codes_netCore.Controllers
 
         public ActionResult CodesTable(int countryId, string R = "0")
         {
-            List<BaseTable> UIcodesTable = new List<BaseTable>();
+            List<BaseTable> _uiCodesTable = new List<BaseTable>();
             BaseTable table = null;
             // init table with default values
             for (int i = 0; i < 100; ++i)
@@ -52,17 +52,17 @@ namespace codes_netCore.Controllers
                 {
                     table.codes[j] = new CodeDt() { code = $"{table.AB}{j}" };
                 }
-                UIcodesTable.Add(table);
+                _uiCodesTable.Add(table);
             }
 
             Country country = _context.Countries.Find(countryId);
-            ICollection<Code> countryCodes = country.Codes;
-            if (countryCodes.Count > 0)
+            ICollection<Code> _countryCodes = country.Codes;
+            if (_countryCodes.Count > 0)
             {
                 // paint cells with roots colors
                 if (R.Length > 1)
                 {
-                    foreach (var ABrow in UIcodesTable)
+                    foreach (var ABrow in _uiCodesTable)
                     {
                         IEnumerable<Code> rootCodes = null;
                         string RAB;
@@ -74,38 +74,69 @@ namespace codes_netCore.Controllers
                                 RAB = RAB.Remove(RAB.Length - i + 1);
                             }
                             RAB = RAB.Substring(RAB.Length - 3);
-                            rootCodes = countryCodes.Where(code => code.R == R.Remove(R.Length - i) && code.Value.Equals(RAB));
+                            rootCodes = _countryCodes.Where(code => code.R == R.Remove(R.Length - i) && (code.Value != null && code.Value.Equals(RAB)) || code.Value == null);
+
                             if (rootCodes.Count() > 0)
                                 break;
                         }
 
                         if (rootCodes.Count() > 0)
+                        {
                             foreach (var rootCode in rootCodes)
                             {
-                                char lastDigit = rootCode.Value[rootCode.Value.Length - 1] == ' ' ?
-                                                        rootCode.Value[rootCode.Value.Length - 2] :
-                                                         rootCode.Value[rootCode.Value.Length - 1];
-                                for (int i = 0; i < 10; ++i)
+                                if (rootCode.Value == null)
                                 {
-                                    if (lastDigit == i.ToString()[0])
+                                    for (int k = 0; k < 10; k++)
                                     {
-                                        for (int k = 0; k < 10; k++)
-                                        {
-                                            ABrow.codes[k].colorHEX = rootCode.Network.Color.Hex;
-                                            ABrow.codes[k].id = -rootCode.Id;
-                                        }
+                                        ABrow.codes[k].colorHEX = rootCode.Network.Color.Hex;
+                                        ABrow.codes[k].id = -rootCode.Id;
                                     }
-                                    continue;
+                                }
+                                else
+                                {
+                                    char lastDigit = rootCode.Value[rootCode.Value.Length - 1] == ' ' ?
+                                                              rootCode.Value[rootCode.Value.Length - 2] :
+                                                               rootCode.Value[rootCode.Value.Length - 1];
+                                    for (int i = 0; i < 10; ++i)
+                                    {
+                                        if (lastDigit == i.ToString()[0])
+                                        {
+                                            for (int k = 0; k < 10; k++)
+                                            {
+                                                ABrow.codes[k].colorHEX = rootCode.Network.Color.Hex;
+                                                ABrow.codes[k].id = -rootCode.Id;
+                                            }
+                                        }
+                                        continue;
+                                    }
                                 }
                             }
+                        }
                     }
+                }
+                else if (R.Length == 1)
+                {
+                    // check if R = root and paint if true
+                    var _rootCode = _countryCodes.Where(r => r.R == R).FirstOrDefault();
+                    if (_rootCode != null && _rootCode.Value == null)
+                    {
+                        foreach (var ABrow in _uiCodesTable)
+                        {
+                            for (int k = 0; k < 10; k++)
+                            {
+                                ABrow.codes[k].colorHEX = _rootCode.Network.Color.Hex;
+                                ABrow.codes[k].id = -_rootCode.Id;
+                            }
+                        }
+                    }
+                    return PartialView(_uiCodesTable);
                 }
 
                 // fill table with codes
-                IEnumerable<Code> codesOfR = countryCodes.Where(code => code.R == R);
+                IEnumerable<Code> codesOfR = _countryCodes.Where(code => code.R == R);
                 if (codesOfR.Count() > 0)
                 {
-                    foreach (var ABrow in UIcodesTable)
+                    foreach (var ABrow in _uiCodesTable)
                     {
                         foreach (var cell in ABrow.codes)
                         {
@@ -122,11 +153,11 @@ namespace codes_netCore.Controllers
                 // paint cells with inherited codes colors
                 IEnumerable<Code> inheritedCodes = null;
 
-                foreach (var ABrow in UIcodesTable)
+                foreach (var ABrow in _uiCodesTable)
                 {
                     foreach (var cell in ABrow.codes)
                     {
-                        inheritedCodes = countryCodes.Where(code => $"{code.R}{code.Value}".StartsWith(R + cell.code));
+                        inheritedCodes = _countryCodes.Where(code => $"{code.R}{code.Value}".StartsWith(R + cell.code));
                         if (inheritedCodes.Count() == 0) continue;
                         string colorHEX = null;
                         foreach (var code in inheritedCodes)
@@ -148,7 +179,7 @@ namespace codes_netCore.Controllers
                     }
                 }
             }
-            return PartialView(UIcodesTable);
+            return PartialView(_uiCodesTable);
         }
 
         public ActionResult CodesList(int countryId)
@@ -251,7 +282,7 @@ namespace codes_netCore.Controllers
             }
             return new StatusCodeResult(StatusCodes.Status400BadRequest);
         }
-        
+
         private bool CountryExists(int id)
         {
             return _context.Countries.Any(e => e.Id == id);

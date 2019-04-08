@@ -242,7 +242,7 @@ function SendCodesOnServer(codes, cells) {
     var isTableSelected = cntrlIsPressed;
     $('#loader').show();
     $.ajax({
-        url: "/Codes/CreateMulti",
+        url: "/Codes/AddCodes",
         type: "POST",
         data: {
             CountryId: $("#ddlCountries").val(),
