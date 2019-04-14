@@ -128,8 +128,8 @@ namespace codes_netCore.Controllers
                                 ABrow.codes[k].id = -_rootCode.Id;
                             }
                         }
+                        return PartialView(_uiCodesTable);
                     }
-                    return PartialView(_uiCodesTable);
                 }
 
                 // fill table with codes
