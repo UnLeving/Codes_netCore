@@ -113,6 +113,24 @@ namespace codes_netCore.Controllers
                             }
                         }
                     }
+
+                    //fill table with codes
+                    IEnumerable<Code> codesOfR = _countryCodes.Where(code => code.R == R);
+                    if (codesOfR.Count() > 0)
+                    {
+                        foreach (var ABrow in _uiCodesTable)
+                        {
+                            foreach (var cell in ABrow.codes)
+                            {
+                                Code code = codesOfR.FirstOrDefault(_code => _code.Value == cell.code);
+                                if (code != null)
+                                {
+                                    cell.colorHEX = code.Network.Color.Hex;
+                                    cell.id = code.Id;
+                                }
+                            }
+                        }
+                    }
                 }
                 else if (R.Length == 1)
                 {
@@ -128,11 +146,11 @@ namespace codes_netCore.Controllers
                                 for (int k = 0; k < 10; k++)
                                 {
                                     ABrow.codes[k].colorHEX = _rootCode.Network.Color.Hex;
-                                    ABrow.codes[k].id = -_rootCode.Id;
+                                    ABrow.codes[k].id = _rootCode.Id;
                                 }
                             }
 
-                            return PartialView(_uiCodesTable);
+                            //return PartialView(_uiCodesTable);
                         }
                         else
                         {
@@ -142,7 +160,7 @@ namespace codes_netCore.Controllers
                                 {
                                     BaseTable _AB = _uiCodesTable.ElementAt(int.Parse(code.Value.Remove(2)));
                                     _AB.codes[int.Parse(code.Value[2].ToString())].colorHEX = code.Network.Color.Hex;
-                                    _AB.codes[int.Parse(code.Value[2].ToString())].id = -code.Id;
+                                    _AB.codes[int.Parse(code.Value[2].ToString())].id = code.Id;
                                 }
                                 else if (code.Value.Length == 2)
                                 {
@@ -150,7 +168,7 @@ namespace codes_netCore.Controllers
                                     for (int i = 0; i < 10; i++)
                                     {
                                         _AB.codes[i].colorHEX = code.Network.Color.Hex;
-                                        _AB.codes[i].id = -code.Id;
+                                        _AB.codes[i].id = code.Id;
                                     }
                                 }
                                 else if (code.Value.Length == 1)
@@ -167,7 +185,7 @@ namespace codes_netCore.Controllers
                                             for (int j = 0; j < 10; j++)
                                             {
                                                 _AB.codes[j].colorHEX = code.Network.Color.Hex;
-                                                _AB.codes[j].id = -code.Id;
+                                                _AB.codes[j].id = code.Id;
                                             }
                                         }
                                     }
@@ -175,25 +193,7 @@ namespace codes_netCore.Controllers
                             }
                         }
                     }
-                    return PartialView(_uiCodesTable);
-                }
-
-                //fill table with codes
-                IEnumerable<Code> codesOfR = _countryCodes.Where(code => code.R == R);
-                if (codesOfR.Count() > 0)
-                {
-                    foreach (var ABrow in _uiCodesTable)
-                    {
-                        foreach (var cell in ABrow.codes)
-                        {
-                            Code code = codesOfR.FirstOrDefault(_code => _code.Value == cell.code);
-                            if (code != null)
-                            {
-                                cell.colorHEX = code.Network.Color.Hex;
-                                cell.id = code.Id;
-                            }
-                        }
-                    }
+                    //return PartialView(_uiCodesTable);
                 }
 
                 // paint cells with inherited codes colors
