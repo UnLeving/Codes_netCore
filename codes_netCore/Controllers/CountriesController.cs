@@ -116,23 +116,69 @@ namespace codes_netCore.Controllers
                 }
                 else if (R.Length == 1)
                 {
-                    // check if R = root and paint if true
-                    var _rootCode = _countryCodes.Where(r => r.R == R).FirstOrDefault();
-                    if (_rootCode != null && _rootCode.Value == null)
+                    var _rootCodes = _countryCodes.Where(r => r.R == R);
+                    if (_rootCodes != null)
                     {
-                        foreach (var ABrow in _uiCodesTable)
+                        // check if R = root and paint if true
+                        if (_rootCodes.Count() == 1 && _rootCodes.FirstOrDefault().Value == null)
                         {
-                            for (int k = 0; k < 10; k++)
+                            var _rootCode = _rootCodes.FirstOrDefault();
+                            foreach (var ABrow in _uiCodesTable)
                             {
-                                ABrow.codes[k].colorHEX = _rootCode.Network.Color.Hex;
-                                ABrow.codes[k].id = -_rootCode.Id;
+                                for (int k = 0; k < 10; k++)
+                                {
+                                    ABrow.codes[k].colorHEX = _rootCode.Network.Color.Hex;
+                                    ABrow.codes[k].id = -_rootCode.Id;
+                                }
+                            }
+
+                            return PartialView(_uiCodesTable);
+                        }
+                        else
+                        {
+                            foreach (var code in _rootCodes)
+                            {
+                                if (code.Value.Length == 3)
+                                {
+                                    BaseTable _AB = _uiCodesTable.ElementAt(int.Parse(code.Value.Remove(2)));
+                                    _AB.codes[int.Parse(code.Value[2].ToString())].colorHEX = code.Network.Color.Hex;
+                                    _AB.codes[int.Parse(code.Value[2].ToString())].id = -code.Id;
+                                }
+                                else if (code.Value.Length == 2)
+                                {
+                                    BaseTable _AB = _uiCodesTable.ElementAt(int.Parse(code.Value));
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        _AB.codes[i].colorHEX = code.Network.Color.Hex;
+                                        _AB.codes[i].id = -code.Id;
+                                    }
+                                }
+                                else if (code.Value.Length == 1)
+                                {
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        if (code.Value != i.ToString())
+                                            continue;
+
+                                        var _ABs = _uiCodesTable.Where(t => t.AB[0] == i.ToString()[0]);
+
+                                        foreach (var _AB in _ABs)
+                                        {
+                                            for (int j = 0; j < 10; j++)
+                                            {
+                                                _AB.codes[j].colorHEX = code.Network.Color.Hex;
+                                                _AB.codes[j].id = -code.Id;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                        return PartialView(_uiCodesTable);
                     }
+                    return PartialView(_uiCodesTable);
                 }
 
-                // fill table with codes
+                //fill table with codes
                 IEnumerable<Code> codesOfR = _countryCodes.Where(code => code.R == R);
                 if (codesOfR.Count() > 0)
                 {

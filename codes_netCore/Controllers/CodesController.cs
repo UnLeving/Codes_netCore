@@ -349,38 +349,79 @@ namespace codes_netCore.Controllers
             Code rootCode = _context.Codes.Find(id);
             if (rootCode == null)
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
-            if (rootCode.Value == null)
+            if (rootCode.R.Length == 1)
             {
-                string AB = null;
-                List<Code> newCodes = new List<Code>();
-
-                // add ddd
-                AB = code.Value.Remove(2);
-                for (int i = 0; i < 10; i++)
+                if (rootCode.Value == null)
                 {
-                    if (code.Value[2] == i.ToString()[0])
-                        continue;
-                    newCodes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
-                }
+                    string AB = null;
 
-                // add dd
-                AB = AB[0].ToString();
-                for (int i = 0; i < 10; i++)
+                    // add ddd
+                    AB = code.Value.Remove(2);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (code.Value[2] == i.ToString()[0])
+                            continue;
+                        _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+
+                    // add dd
+                    AB = AB[0].ToString();
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (code.Value[1] == i.ToString()[0])
+                            continue;
+                        _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+
+                    // add d
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (AB == i.ToString())
+                            continue;
+                        _context.Codes.Add(new Code() { Value = i.ToString(), R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+                }
+                else if (rootCode.Value.Length == 1)
                 {
-                    if (code.Value[1] == i.ToString()[0])
-                        continue;
-                    newCodes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
-                }
+                    string AB = null;
 
-                // add d
-                for (int i = 0; i < 10; i++)
+                    // add ddd
+                    AB = code.Value.Remove(2);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (code.Value[2] == i.ToString()[0])
+                            continue;
+                        _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+
+                    // add dd
+                    AB = AB[0].ToString();
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (code.Value[1] == i.ToString()[0])
+                            continue;
+                        _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
+                    }
+
+                }
+                else if (rootCode.Value.Length == 2)
                 {
-                    if (AB == i.ToString())
-                        continue;
-                    newCodes.Add(new Code() { Value = i.ToString(), R = rootCode.R, CountryId = rootCode.CountryId, NetworkId = rootCode.NetworkId });
-                }
+                    // add ddd
+                    string AB = code.Value.Remove(2);
 
-                _context.AddRange(newCodes);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (code.Value[2] == i.ToString()[0])
+                            continue;
+                        _context.Codes.Add(new Code()
+                        {
+                            Value = $"{AB}{i}",
+                            R = rootCode.R,
+                            CountryId = rootCode.CountryId,
+                            NetworkId = rootCode.NetworkId
+                        });
+                    }
+                }
             }
             else
             {
