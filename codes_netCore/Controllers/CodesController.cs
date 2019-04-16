@@ -130,9 +130,12 @@ namespace codes_netCore.Controllers
                                 {
                                     // 2 -> 1
                                     List<Code> _twoDigitsCodes = new List<Code>();
+                                    List<Code> _threeDigitsCodes = new List<Code>();
                                     foreach (var _code in _entriesCodes)
                                         if (_code.Value.Length == 2 && _code.Value.StartsWith(code.Remove(code.Length - 2)))
                                             _twoDigitsCodes.Add(_code);
+                                        else if (_code.Value.Length == 3 && _code.Value.StartsWith(code.Remove(code.Length - 2)))
+                                            _threeDigitsCodes.Add(_code);
 
                                     if (_twoDigitsCodes.Count == 9)
                                     {
@@ -142,9 +145,11 @@ namespace codes_netCore.Controllers
                                             if (_code.Value.Length == 1)
                                                 _oneDigitCodes.Add(_code);
 
-                                        if (_oneDigitCodes.Count == 99)
+                                        if (_oneDigitCodes.Count == 9)
                                         {
                                             _context.Codes.RemoveRange(_oneDigitCodes);
+                                            if(_threeDigitsCodes.Count > 0)
+                                                _context.Codes.RemoveRange(_threeDigitsCodes);
                                             _context.Codes.Add(new Code()
                                             {
                                                 CountryId = codes.CountryId,
@@ -157,6 +162,8 @@ namespace codes_netCore.Controllers
                                         else
                                         {
                                             _context.Codes.RemoveRange(_twoDigitsCodes);
+                                            if (_threeDigitsCodes.Count > 0)
+                                                _context.Codes.RemoveRange(_threeDigitsCodes);
                                             _context.Codes.Add(new Code()
                                             {
                                                 CountryId = codes.CountryId,
@@ -184,13 +191,20 @@ namespace codes_netCore.Controllers
                                 {
                                     // 1 -> R
                                     List<Code> _oneDigitCodes = new List<Code>();
+                                    byte _count = 0;
                                     foreach (var _code in _codesByNetworkAndR)
                                         if (_code.Value?.Length == 1)
                                             _oneDigitCodes.Add(_code);
-
-                                    if (_oneDigitCodes.Count == 5)
+                                    for (int i = 0; i < 5; i++)
                                     {
-                                        _context.RemoveRange(_oneDigitCodes);
+                                        if (_oneDigitCodes.Find(c => c.Value == i.ToString()) != null)
+                                            ++_count;
+                                    }
+
+                                    // check if from one table
+                                    if (_oneDigitCodes.Count == 5 && _count == 5)
+                                    {
+                                        _context.RemoveRange(_Rcodes);
                                         _context.Add(new Code()
                                         {
                                             CountryId = codes.CountryId,
@@ -203,6 +217,7 @@ namespace codes_netCore.Controllers
                                     else
                                     {
                                         // 3 -> 1
+                                        _context.RemoveRange(_oneDigitCodes);
                                         for (int i = 0; i < codes.Values.Count(); i += 100)
                                         {
                                             _context.Codes.Add(new Code()

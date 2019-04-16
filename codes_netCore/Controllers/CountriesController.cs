@@ -149,8 +149,6 @@ namespace codes_netCore.Controllers
                                     ABrow.codes[k].id = _rootCode.Id;
                                 }
                             }
-
-                            //return PartialView(_uiCodesTable);
                         }
                         else
                         {
@@ -193,7 +191,6 @@ namespace codes_netCore.Controllers
                             }
                         }
                     }
-                    //return PartialView(_uiCodesTable);
                 }
 
                 // paint cells with inherited codes colors
