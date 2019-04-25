@@ -48,7 +48,7 @@ namespace codes_netCore.Controllers
 
                 PaintRcodes(ref _Rcodes, ref _uiCodesTable);
                 FindAndPaintRootCodes(ref _countryCodes, ref _uiCodesTable, R);
-                //FindAndPaintInheritedCodes(ref _countryCodes, ref _uiCodesTable, R);
+                FindAndPaintInheritedCodes(ref _countryCodes, ref _uiCodesTable, R);
             }
             return PartialView(_uiCodesTable);
         }
@@ -197,7 +197,7 @@ namespace codes_netCore.Controllers
                 foreach (var cell in ABrow.codes)
                 {
                     inheritedCodes = _countryCodes.Where(code => $"{code.R}{code.Value}".StartsWith(R + cell.code));
-                    if (inheritedCodes == null)
+                    if (inheritedCodes.Count() == 0)
                         continue;
                     string colorHEX = null;
                     foreach (var code in inheritedCodes)
