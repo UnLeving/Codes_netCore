@@ -40,6 +40,7 @@ $('body').on('contextmenu', 'thead th', function () {
         cntrlIsPressed = false;
         return;
     }
+    
     var codesIDs = [];
     var columnCells = [];
     var tableCodes = this.closest('table');
@@ -64,21 +65,24 @@ $('body').on('contextmenu', 'tbody td', function () {
     var rowCells = [];
     var cells = [];
     if (cntrlIsPressed) {
-        rowCells = $(this.closest('tbody')).children();
-        for (var i = 0; i < rowCells.length; ++i) {
-            for (var j = 2; j < 12; ++j) {
-                if (rowCells[i].cells[j].id !== "0") {
-                    codesIDs.push(rowCells[i].cells[j].id);
-                    cells.push(rowCells[i].cells[j]);
-                }
-            }
-        }
-        if (codesIDs.length === 0) {
-            document.getElementById("Logs").value = "Client: nothing to delete";
-            cntrlIsPressed = false;
-            window.event.preventDefault();
-            return;
-        }
+        //rowCells = $(this.closest('tbody')).children();
+        //for (var i = 0; i < rowCells.length; ++i) {
+        //    for (var j = 2; j < 12; ++j) {
+        //        if (rowCells[i].cells[j].id !== "0") {
+        //            codesIDs.push(rowCells[i].cells[j].id);
+        //            cells.push(rowCells[i].cells[j]);
+        //        }
+        //    }
+        //}
+        //if (codesIDs.length === 0) {
+        //    document.getElementById("Logs").value = "Client: nothing to delete";
+        //    cntrlIsPressed = false;
+        //    window.event.preventDefault();
+        //    return;
+        //}
+        DeleteAllTableCodes($("#regionChange").val());
+        window.event.preventDefault();
+        return;
     } else if (this.id < 0) {
         DeleteInheritedCode(this.id, this.textContent);
         window.event.preventDefault();
@@ -117,7 +121,11 @@ $('body').on('contextmenu', 'tbody th', function () {
 
     if (codesIDs.length === 0) {
         document.getElementById("Logs").value = "Client: nothing to delete";
-    } else
+    } else if (codesIDs[0] < 0)
+    {
+        DeleteInheritedCode(rowCells[0].id, 0);
+    }
+    else
         DeleteCodes(codesIDs, cells);
 });
 
@@ -151,6 +159,26 @@ function DeleteInheritedCode(rootId, code) {
             CountryId: $("#ddlCountries").val(),
             R: $("#regionChange").val(),
             Value: code
+        },
+        success: function () {
+            document.getElementById("Logs").value = "200 OK";
+            RegionChanged($("#regionChange").val());
+            $('#loader').hide();
+        },
+        error: function (status) {
+            document.getElementById("Logs").value = status.statusText;
+            $('#loader').hide();
+        }
+    });
+}
+
+function DeleteAllTableCodes(R) {
+    $('#loader').show();
+    $.ajax({
+        url: "/Codes/DeleteAllTableCodes",
+        type: "POST",
+        data: {
+            R: R
         },
         success: function () {
             document.getElementById("Logs").value = "200 OK";

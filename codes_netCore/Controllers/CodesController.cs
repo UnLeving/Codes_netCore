@@ -148,7 +148,7 @@ namespace codes_netCore.Controllers
                                         if (_oneDigitCodes.Count == 9)
                                         {
                                             _context.Codes.RemoveRange(_oneDigitCodes);
-                                            if(_threeDigitsCodes.Count > 0)
+                                            if (_threeDigitsCodes.Count > 0)
                                                 _context.Codes.RemoveRange(_threeDigitsCodes);
                                             _context.Codes.Add(new Code()
                                             {
@@ -422,19 +422,22 @@ namespace codes_netCore.Controllers
                 else if (rootCode.Value.Length == 2)
                 {
                     // add ddd
-                    string AB = code.Value.Remove(2);
-
-                    for (int i = 0; i < 10; i++)
+                    if (code.Value != "0")
                     {
-                        if (code.Value[2] == i.ToString()[0])
-                            continue;
-                        _context.Codes.Add(new Code()
+                        string AB = code.Value.Remove(2);
+
+                        for (int i = 0; i < 10; i++)
                         {
-                            Value = $"{AB}{i}",
-                            R = rootCode.R,
-                            CountryId = rootCode.CountryId,
-                            NetworkId = rootCode.NetworkId
-                        });
+                            if (code.Value[2] == i.ToString()[0])
+                                continue;
+                            _context.Codes.Add(new Code()
+                            {
+                                Value = $"{AB}{i}",
+                                R = rootCode.R,
+                                CountryId = rootCode.CountryId,
+                                NetworkId = rootCode.NetworkId
+                            });
+                        }
                     }
                 }
             }
@@ -487,6 +490,20 @@ namespace codes_netCore.Controllers
             }
             if (_isAnyCodeDeleted)
             {
+                _context.SaveChanges();
+                return new StatusCodeResult(StatusCodes.Status200OK);
+            }
+            else
+                return new StatusCodeResult(StatusCodes.Status400BadRequest);
+        }
+
+        [HttpPost]
+        public IActionResult DeleteAllTableCodes(string R)
+        {
+            var _codes = _context.Codes.Where(c => c.R == R);
+            if(_codes != null)
+            {
+                _context.Codes.RemoveRange(_codes);
                 _context.SaveChanges();
                 return new StatusCodeResult(StatusCodes.Status200OK);
             }
