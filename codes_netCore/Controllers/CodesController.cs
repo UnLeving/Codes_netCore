@@ -89,6 +89,7 @@ namespace codes_netCore.Controllers
                                                     else
                                                     {
                                                         _context.Codes.RemoveRange(_twoDigitsCodes);
+                                                        _context.Codes.RemoveRange(_threeDigitsCodes);
                                                         // collapse codes to one digit code (value)
                                                         _context.Codes.Add(new Code()
                                                         {

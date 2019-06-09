@@ -62,24 +62,8 @@ $('body').on('contextmenu', 'thead th', function () {
 // delete single code  OR all codes by CTRL pressed
 $('body').on('contextmenu', 'tbody td', function () {
     var codesIDs = [];
-    var rowCells = [];
     var cells = [];
     if (cntrlIsPressed) {
-        //rowCells = $(this.closest('tbody')).children();
-        //for (var i = 0; i < rowCells.length; ++i) {
-        //    for (var j = 2; j < 12; ++j) {
-        //        if (rowCells[i].cells[j].id !== "0") {
-        //            codesIDs.push(rowCells[i].cells[j].id);
-        //            cells.push(rowCells[i].cells[j]);
-        //        }
-        //    }
-        //}
-        //if (codesIDs.length === 0) {
-        //    document.getElementById("Logs").value = "Client: nothing to delete";
-        //    cntrlIsPressed = false;
-        //    window.event.preventDefault();
-        //    return;
-        //}
         DeleteAllTableCodes($("#regionChange").val());
         window.event.preventDefault();
         return;
