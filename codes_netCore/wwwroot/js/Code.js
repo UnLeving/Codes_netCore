@@ -40,23 +40,34 @@ $('body').on('contextmenu', 'thead th', function () {
         cntrlIsPressed = false;
         return;
     }
-    
+
     var codesIDs = [];
+    var codes = [];
     var columnCells = [];
+    var flag = false;
     var tableCodes = this.closest('table');
     var selectedColumn = parseInt(this.textContent, 10) + 2;
     for (var i = 1; i < tableCodes.rows.length; ++i) {
-        if (tableCodes.rows[i].cells[selectedColumn].id !== "0") {
-            codesIDs.push(tableCodes.rows[i].cells[selectedColumn].id);
-            columnCells.push(tableCodes.rows[i].cells[selectedColumn]);
+        if (tableCodes.rows[i].cells[selectedColumn].id < 0) {
+            flag = true;
         }
-    }
-    if (codesIDs.length === 0) {
-        document.getElementById("Logs").value = "Client: nothing to delete";
-        return;
+        codesIDs.push(tableCodes.rows[i].cells[selectedColumn].id);
+        columnCells.push(tableCodes.rows[i].cells[selectedColumn]);
+        codes.push(tableCodes.rows[i].cells[selectedColumn].textContent);
     }
 
-    DeleteCodes(codesIDs, columnCells);
+    if (codesIDs.length === 0) {
+        document.getElementById("Logs").value = "Client: nothing to delete";
+    } else if (flag === true) {
+        if ($("#regionChange").val().length === 1) {
+            DeleteColumnMixedCodes(codesIDs, $("#regionChange").val(), codes);
+        }
+        else {
+            DeleteInheritedCode(codesIDs[0], 0);
+        }
+    }
+    else
+        DeleteCodes(codesIDs, columnCells);
 });
 
 // delete single code  OR all codes by CTRL pressed
@@ -105,8 +116,7 @@ $('body').on('contextmenu', 'tbody th', function () {
 
     if (codesIDs.length === 0) {
         document.getElementById("Logs").value = "Client: nothing to delete";
-    } else if (codesIDs[0] < 0)
-    {
+    } else if (codesIDs[0] < 0) {
         DeleteInheritedCode(rowCells[0].id, 0);
     }
     else
@@ -124,6 +134,28 @@ function DeleteCodes(codesIDs, cells) {
         success: function () {
             $(cells).css('background-color', '#FFFFFF');
             document.getElementById("Logs").value = "200 OK";
+            $('#loader').hide();
+        },
+        error: function (status) {
+            document.getElementById("Logs").value = status.statusText;
+            $('#loader').hide();
+        }
+    });
+}
+
+function DeleteColumnMixedCodes(codesIDs, R, codes) {
+    $('#loader').show();
+    $.ajax({
+        url: "/Codes/DeleteColumnMixedCodes",
+        type: "POST",
+        data: {
+            ids: codesIDs,
+            R: R,
+            codes: codes
+        },
+        success: function () {
+            document.getElementById("Logs").value = "200 OK";
+            RegionChanged($("#regionChange").val());
             $('#loader').hide();
         },
         error: function (status) {

@@ -1,4 +1,5 @@
 ﻿using codes_netCore.Models;
+using codes_netCore.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -470,13 +471,133 @@ namespace codes_netCore.Controllers
         }
 
         [HttpPost]
+        public IActionResult DeleteColumnMixedCodes([Bind("Ids,R,Codes")] DeleteMixedCodesViewModel deleteMixedCodes)//int?[] ids, string R, string[] codes)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest();
+            if (deleteMixedCodes.R.Length != 1)
+                return BadRequest();
+            bool _isAnyCodeDeleted = false;
+            int _id = 0;
+            Code code;
+            for (int j = 0; j < deleteMixedCodes.Ids.Length - 1; ++j)
+            {
+                if (deleteMixedCodes.Ids[j] == 0)
+                    continue;
+                if (_id == -deleteMixedCodes.Ids[j] || _id == deleteMixedCodes.Ids[j])
+                    continue;
+
+                // if negetive - root code
+                if (deleteMixedCodes.Ids[j] < 0)
+                {
+                    _id = -deleteMixedCodes.Ids[j];
+                    code = _context.Codes.Find(_id);
+                    if (code == null)
+                        continue;
+
+                    if (code.Value == null)
+                    {
+                        string AB = null;
+
+                        // add ddd
+                        AB = deleteMixedCodes.Codes[j].Remove(2);
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (deleteMixedCodes.Codes[j][2] == i.ToString()[0])
+                                continue;
+                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+
+                        // add dd
+                        AB = AB[0].ToString();
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (deleteMixedCodes.Codes[j][1] == i.ToString()[0])
+                                continue;
+                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+
+                        // add d
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (AB == i.ToString())
+                                continue;
+                            _context.Codes.Add(new Code() { Value = i.ToString(), R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+                    }
+                    else if (code.Value.Length == 1)
+                    {
+                        string AB = null;
+
+                        // add ddd
+                        AB = deleteMixedCodes.Codes[j].Remove(2);
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (deleteMixedCodes.Codes[j][2] == i.ToString()[0])
+                                continue;
+                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+
+                        // add dd
+                        AB = AB[0].ToString();
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (deleteMixedCodes.Codes[j][1] == i.ToString()[0])
+                                continue;
+                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+
+                    }
+                    else if (code.Value.Length == 2)
+                    {
+                        // add ddd
+                        if (code.Value != "0")
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                if (deleteMixedCodes.Codes[j][2] == i.ToString()[0])
+                                    continue;
+                                _context.Codes.Add(new Code()
+                                {
+                                    Value = $"{code.Value}{i}",
+                                    R = code.R,
+                                    CountryId = code.CountryId,
+                                    NetworkId = code.NetworkId
+                                });
+                            }
+                        }
+                    }
+                }
+                // if positive - code
+                else
+                {
+                    _id = deleteMixedCodes.Ids[j];
+                    code = _context.Codes.Find(_id);
+                    if (code == null)
+                        continue;
+                }
+
+                if (_context.Codes.Remove(code) != null)
+                    _isAnyCodeDeleted = true;
+            }
+            if (_isAnyCodeDeleted)
+            {
+                _context.SaveChanges();
+                return Ok();
+            }
+            else
+                return NotFound();
+
+        }
+
+        [HttpPost]
         public IActionResult Delete(int?[] ids)
         {
-            bool _isAnyCodeDeleted = false;
             if (ids == null)
             {
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
             }
+            bool _isAnyCodeDeleted = false;
             Code code;
             foreach (var id in ids)
             {
@@ -502,7 +623,7 @@ namespace codes_netCore.Controllers
         public IActionResult DeleteAllTableCodes(string R)
         {
             var _codes = _context.Codes.Where(c => c.R == R);
-            if(_codes != null)
+            if (_codes != null)
             {
                 _context.Codes.RemoveRange(_codes);
                 _context.SaveChanges();
