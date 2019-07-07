@@ -471,7 +471,7 @@ namespace codes_netCore.Controllers
         }
 
         [HttpPost]
-        public IActionResult DeleteColumnMixedCodes([Bind("Ids,R,Codes")] DeleteMixedCodesViewModel deleteMixedCodes)//int?[] ids, string R, string[] codes)
+        public IActionResult DeleteColumnMixedCodes([Bind("Ids,R,C,Codes")] DeleteMixedCodesViewModel deleteMixedCodes)//int?[] ids, string R, string[] codes)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -480,6 +480,44 @@ namespace codes_netCore.Controllers
             bool _isAnyCodeDeleted = false;
             int _id = 0;
             Code code;
+
+            if (deleteMixedCodes.Ids[0] < 0)
+            {
+                _id = -deleteMixedCodes.Ids[0];
+                code = _context.Codes.Find(_id);
+                if (code == null)
+                    return NotFound();
+
+                if (code.Value == null)
+                {
+                    int T = 0;
+                    if (int.Parse(deleteMixedCodes.Codes[0][0].ToString()) >= 5)
+                        T = 50;
+
+                    for (int i = 0 + T; i < 50 + T; i++)
+                    {
+                        for (int j = 0; j < 10; j++)
+                        {
+                            if (deleteMixedCodes.C == j.ToString())
+                                continue;
+                            string AB = i < 10 ? "0" + i : i.ToString();
+                            _context.Codes.Add(new Code() { Value = $"{AB}{j}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        }
+                    }
+
+                    for (int i = 5 - (T == 0 ? 0 : T / 10); i < 10 - (T == 0 ? 0 : T / 10); i++)
+                    {
+                        _context.Codes.Add(new Code() { Value = $"{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                    }
+
+                    if (_context.Codes.Remove(code) != null)
+                    {
+                        _context.SaveChanges();
+                        return Ok();
+                    }
+                }
+            }
+
             for (int j = 0; j < deleteMixedCodes.Ids.Length - 1; ++j)
             {
                 if (deleteMixedCodes.Ids[j] == 0)
@@ -501,29 +539,30 @@ namespace codes_netCore.Controllers
 
                         // add ddd
                         AB = deleteMixedCodes.Codes[j].Remove(2);
-                        for (int i = 0; i < 10; i++)
-                        {
-                            if (deleteMixedCodes.Codes[j][2] == i.ToString()[0])
-                                continue;
-                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
-                        }
+                        for (int k = 0; k < 50; ++k)
+                            for (int i = 0; i < 10; i++)
+                            {
+                                if (deleteMixedCodes.Codes[j][2] == i.ToString()[0])
+                                    continue;
+                                _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                            }
 
-                        // add dd
-                        AB = AB[0].ToString();
-                        for (int i = 0; i < 10; i++)
-                        {
-                            if (deleteMixedCodes.Codes[j][1] == i.ToString()[0])
-                                continue;
-                            _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
-                        }
+                        //// add dd
+                        //AB = AB[0].ToString();
+                        //for (int i = 0; i < 10; i++)
+                        //{
+                        //    if (deleteMixedCodes.Codes[j][1] == i.ToString()[0])
+                        //        continue;
+                        //    _context.Codes.Add(new Code() { Value = $"{AB}{i}", R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        //}
 
-                        // add d
-                        for (int i = 0; i < 10; i++)
-                        {
-                            if (AB == i.ToString())
-                                continue;
-                            _context.Codes.Add(new Code() { Value = i.ToString(), R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
-                        }
+                        //// add d
+                        //for (int i = 0; i < 10; i++)
+                        //{
+                        //    if (AB == i.ToString())
+                        //        continue;
+                        //    _context.Codes.Add(new Code() { Value = i.ToString(), R = code.R, CountryId = code.CountryId, NetworkId = code.NetworkId });
+                        //}
                     }
                     else if (code.Value.Length == 1)
                     {

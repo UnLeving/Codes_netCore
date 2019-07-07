@@ -172,7 +172,8 @@ function DeleteColumnMixedCodes(codesIDs, R, codes) {
         data: {
             ids: codesIDs,
             R: R,
-            codes: codes
+            C: codes[0][2],
+            Codes: codes
         },
         success: function () {
             document.getElementById("Logs").value = "200 OK";
